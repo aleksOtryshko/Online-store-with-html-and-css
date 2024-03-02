@@ -54,18 +54,70 @@
     <div class="container">
         <!-- Products will be displayed here -->
         <?php
-        require_once 'mysql.php';
-        $result_all_product = mysqli_query($link, "SELECT * FROM `product`");
-        while($rows_all_product = mysqli_fetch_assoc($result_all_product)) {
-            echo "<div class='product'>";
-            echo "<img src='data:image/png;base64,".base64_encode($rows_all_product['img'])."' alt='Product Image'>";
-            echo "<h2>" . htmlspecialchars($rows_all_product['model']) . "</h2>";
-            echo "<p>" . htmlspecialchars($rows_all_product['description']) . "</p>";
-            echo "<p>Price: $" . htmlspecialchars($rows_all_product['price']) . "</p>";
-            echo "<button>Add to Cart</button>";
-            echo "</div>";
-        }
-        ?>
+session_start();
+require_once 'mysql.php';
+
+// Обработка аутентификации
+if(isset($_POST['login']) && isset($_POST['password'])) {
+    $login = mysqli_real_escape_string($link, trim($_POST['login']));
+    $password = mysqli_real_escape_string($link, trim($_POST['password']));
+
+    $sql = mysqli_query($link, "SELECT * FROM `customer` WHERE `login` = '{$login}' AND `password` = '{$password}' ");
+    if(mysqli_num_rows($sql) == 1) {
+        $rows_sql = mysqli_fetch_assoc($sql);
+        $_SESSION['id'] = $rows_sql['id_customer'];
+        echo "Вы авторизованы.";
+    } else {
+        echo "Неправильный логин или пароль";
+    }
+}
+
+// Обработка выхода
+if(isset($_POST['log_out'])) {
+    unset($_SESSION['id']);
+    echo "Вы вышли из системы.";
+}
+
+// Форма поиска
+echo <<<FORMA
+<form name="search_product" method="POST" action="search.php">
+Поиск по модели товара: <br />
+<input type="search" name="search" />
+<br />
+<input type="submit" value="Поиск" /> <br /><br />
+</form>
+FORMA;
+
+// Форма входа и выхода
+echo <<<FORMA
+<form method="POST">
+<br />
+Имя: <input type="text" name="login" /><br />
+Пароль: <input type="password" name="password" /><br />
+<input type="submit" name="log_in" value="Войти" /><br /><br /><br />
+<input type="checkbox" name="quit" /><label for="quit">Выход</label>
+<input type="submit" name="log_out" value="Выйти" />
+</form>
+FORMA;
+
+// Вывод всех товаров
+$result_all_product = mysqli_query($link, "SELECT * FROM `product`");
+while($rows_all_product = mysqli_fetch_assoc($result_all_product)) {
+    echo "<div>";
+    echo "<br />";
+    echo "Модель: <br />";
+    echo "<a href='article_product.php?id_product={$rows_all_product['id_product']}'>".htmlspecialchars($rows_all_product['model'])."</a>" ;
+    echo "<br />";
+    echo "<br />";
+    echo "Описание : <br />";
+    $descripton = htmlspecialchars($rows_all_product['description']);
+    echo $descripton;
+    echo "<br />";
+    echo "</div>";
+    echo "<br />";
+    echo "<br />";
+}
+?>
     </div>
 </body>
 </html>
